@@ -42,13 +42,12 @@ import {
 import { getSizeOfScalarDataType } from "~src/common/utils";
 import processBlockItem from "~src/processor/processBlockItem";
 import { FunctionDefinitionP } from "~src/processor/c-ast/function";
-import { StatementP } from "~src/processor/c-ast/core";
 import { addWarning } from "~src/processor/warningUtil";
 import {
   checkBinaryExpressionConstraints,
   checkConditionalExpressionOperands,
 } from "~src/processor/constraintChecks";
-
+import { StatementP } from "./c-ast/core";
 /**
  * Processes an Expression node in the context where value(s) are expected to be loaded from memory for use in a statement (action).
  */
@@ -61,7 +60,6 @@ export default function processExpression(
     if (expr.type === "Assignment") {
       const { memoryStoreStatements, memoryLoadExpressions, dataType } =
         getAssignmentNodes(expr, symbolTable);
-
       return {
         originalDataType: dataType,
         exprs: [
@@ -268,6 +266,36 @@ export default function processExpression(
             expr: returnObjectMemoryLoads[0],
           },
           ...returnObjectMemoryLoads.slice(1),
+        ],
+      };
+    } else if (expr.type === "TypeCastingExpression") {
+      // type casting is just a way to tell the compiler to treat an expression as another type
+      // no actual conversion is done here
+      const processedExpr = processExpression(expr.expr, symbolTable);
+      const originalDataType: ScalarDataType = {
+        type: "primary",
+        primaryDataType: "double"
+      };
+      const targetDataType = expr.targetDataType;
+
+
+      // const typeCastingExpressionP : ExpressionP = {
+      //   type: "TypeCastingExpression",
+      //   from: originalDataType,
+      //   to: targetDataType,
+      //   expr: processedExpr.exprs[0]
+      // }
+
+      return {
+        originalDataType: targetDataType,
+        exprs: [
+          {
+            type: "PreStatementExpression",
+            statements: [],
+            expr: processedExpr.exprs[0],
+            dataType: processedExpr.exprs[0].dataType,
+          },
+          ...processedExpr.exprs.slice(1),
         ],
       };
     } else if (expr.type === "PrefixExpression") {
@@ -583,7 +611,7 @@ export default function processExpression(
         let currLoadIndex = fieldIndex;
 
         if (processedExpr.exprs[0].type === "PreStatementExpression") {
-          // special case - if the first expression is a prestatement, then it is probably a function call, need to make sure that the statements from the prestatement are included
+          // special case  - if the first expression is a prestatement, then it is probably a function call, need to make sure that the statements from the prestatement are included
           const loadExpr = processedExpr.exprs[currLoadIndex++];
           if (loadExpr.type === "PreStatementExpression") {
             // fieldIndex could be 0, so loadExpr and exprs[0] could be the same prestatementexpression

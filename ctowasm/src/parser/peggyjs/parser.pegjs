@@ -18,6 +18,22 @@
   /**
    * Helper function to create and return a Node with position and type information
    */
+  function createTypeCastNode(type, expr) {
+    // Perform type checking for the cast
+
+    if (type.primaryDataType === "void") {
+      error("Cannot cast to void type");
+    }
+    if (expr.type === "StructMemberAccess" || expr.type === "StructPointerMemberAccess") {
+      error("Cannot cast struct or struct pointer types");
+    }
+
+    return generateNode("TypeCastingExpression", {
+      expr: expr,
+      targetDataType: type,
+    });
+  }
+
   function generateNode(type, data) {
     return {
       type: type,
@@ -376,9 +392,9 @@
     let correctedSuffix;
     if (suffix.length > 0) {
       correctedSuffix = suffix.toLowerCase();
-      if (correctedSuffix.contains("ll")) {
+      if (correctedSuffix.includes("ll")) {
         // in this implementation long long and long are identical
-        if (correctedSuffix.contains("u")) {
+        if (correctedSuffix.includes("u")) {
           correctedSuffix = "ul";
         } else {
           correctedSuffix = "l";
@@ -1938,7 +1954,8 @@ multiply_divide_expression
   / unary_expression // as the last binary expression (highest precedence), this rule is needed
 
 unary_expression 
-  = operations:(@prefix_operation _)+ firstExpr:postfix_expression { return createPrefixExpressionNode(firstExpr, operations); }
+  = "(" _ type:type_name _ ")" _ expr:unary_expression { return createTypeCastNode(type, expr); }
+  / operations:(@prefix_operation _)+ firstExpr:postfix_expression { return createPrefixExpressionNode(firstExpr, operations); }
   / postfix_expression
 
 prefix_operation

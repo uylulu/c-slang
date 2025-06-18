@@ -13,6 +13,7 @@ import {
   toJson,
 } from "~src/errors";
 import ModuleRepository, { ModuleName } from "~src/modules";
+import interprete from "./intepreter";
 
 export interface SuccessfulCompilationResult {
   status: "success";
@@ -48,6 +49,8 @@ export async function compile(
         generateCompilationWarningMessage(w.message, cSourceCode, w.position),
       ),
     );
+    interprete(astRootNode, includedModules);
+
     const wasmModule = translate(astRootNode, moduleRepository);
     const output = await compileWatToWasm(generateWat(wasmModule));
     return {

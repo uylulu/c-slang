@@ -24,6 +24,7 @@ export default function translateStatement(
   statement: StatementP,
   enclosingLoopDetails?: EnclosingLoopDetails, // the loop labelname of the loop enclosing this statement Used to translate break statements.
 ): WasmStatement {
+  // console.log("STATEMENT: ", statement)
   if (statement.type === "MemoryStore") {
     return {
       type: "MemoryStore",

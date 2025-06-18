@@ -12,6 +12,7 @@ import {
   ConditionalExpressionP,
   PostStatementExpressionP,
   PreStatementExpressionP,
+  TypeCastingExpressionP,
   UnaryExpressionP,
 } from "~src/processor/c-ast/expression/expressions";
 import {
@@ -56,7 +57,8 @@ export type ExpressionP =
   | UnaryExpressionP
   | Address
   | MemoryLoad
-  | ConditionalExpressionP;
+  | ConditionalExpressionP
+  | TypeCastingExpressionP;
 
 /**
  * All expressions should inherit this, as all expressions should have a primary data type.

@@ -33,6 +33,7 @@ export default function translateExpression(
   targetType: ScalarCDataType, // the wasm type that is expected for the result of this expression
   enclosingLoopDetails?: EnclosingLoopDetails,
 ): WasmExpression {
+  // console.log("EXPR: ", expr);
   function translateExpressionHelper(): WasmExpression {
     if (expr.type === "BinaryExpression") {
       return translateBinaryExpression(expr, enclosingLoopDetails);
@@ -144,7 +145,10 @@ export default function translateExpression(
     }
   }
 
-  // add any type conversion wrapper on the WasmExpression node if needed
+  // console.log("FROM: ", expr.dataType);
+  // console.log("TO: ", targetType);
+  // console.log(expr);
+  
   return getTypeConversionWrapper(
     expr.dataType,
     targetType,

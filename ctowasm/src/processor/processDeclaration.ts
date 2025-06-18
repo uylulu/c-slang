@@ -154,6 +154,8 @@ export function unpackLocalVariableInitializerAccordingToDataType(
   const memoryStoreStatements: MemoryStore[] = [];
   let currOffset = variableSymbolEntry.offset; // offset to use for address in memory store statements
 
+  // console.log("UNPACKING: ", initializer);
+
   runInitializerChecks(variableSymbolEntry.dataType, initializer);
 
   let structBeingFilled: StructDataType; // the current struct being filled, used for struct self pointer logic
@@ -162,6 +164,7 @@ export function unpackLocalVariableInitializerAccordingToDataType(
     initializer: Initializer,
     offset: number,
   ): number {
+    // console.log("HELPER: ", dataType, initializer);
     if (
       dataType.type === "primary" ||
       dataType.type === "pointer" ||
@@ -190,6 +193,7 @@ export function unpackLocalVariableInitializerAccordingToDataType(
         } else {
           checkIntializerExpressionAssignability(dataType, processedExpr);
         }
+        // console.log("Initializer single: ", processedExpr, dataType);
 
         memoryStoreStatements.push({
           type: "MemoryStore",

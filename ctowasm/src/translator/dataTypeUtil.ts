@@ -160,6 +160,7 @@ function getNeededNumericConversionInstruction(
 /**
  * Get the WAT AST NumericWrapper node that converts a primary C data type "from" to another type "to".
  */
+// here, "from" is the type of the value being assigned, and "to" is the type of the variable being assigned to
 export function getTypeConversionWrapper(
   from: ScalarCDataType, // the C variable type of value being assigned
   to: ScalarCDataType, // the C variable type of variable being assigned to

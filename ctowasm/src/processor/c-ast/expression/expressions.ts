@@ -1,3 +1,4 @@
+import { ScalarDataType } from "~dist";
 import { BinaryOperator, ScalarCDataType } from "~src/common/types";
 import { DataType } from "~src/parser/c-ast/dataTypes";
 import {
@@ -48,6 +49,13 @@ export interface ConditionalExpressionP extends ExpressionPBase {
   condition: ExpressionP;
   trueExpression: ExpressionP; // expression to return if condition is not zero (true)
   falseExpression: ExpressionP;
+}
+
+export interface TypeCastingExpressionP extends ExpressionPBase {
+  type: "TypeCastingExpression";
+  from: ScalarCDataType;
+  to: ScalarCDataType;
+  expr: ExpressionP;
 }
 
 /**
