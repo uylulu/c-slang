@@ -1,69 +1,52 @@
-// A runtime class for the interpreter which encapsulates the memory 
-import { checkAndExpandMemoryIfNeeded } from "~src/modules/util";
+import { Address } from "~src/processor/c-ast/memory";
+import { Memory } from "./memory";
+import { ConstantP } from "~src/processor/c-ast/expression/constants";
+import { ExpressionP, StatementP } from "~src/processor/c-ast/core";
 
-import { KB, WASM_PAGE_IN_HEX } from "~src/common/constants";
-import { calculateNumberOfPagesNeededForBytes } from "~src/common/utils";
-import { WASM_ADDR_TYPE } from "~src/translator/memoryUtil";
-import { SharedWasmGlobalVariables } from "~src/modules";
 
-export function parseDataSegmentByteStr(dataSegmentByteStr: string) : Uint8Array {
-    const matches = dataSegmentByteStr.match(/\\([0-9a-fA-F]{2})/g)
-    const bytes = matches?.map(byteStr => byteStr.slice(2));
-    console.log(matches);
-    console.log("FUKK");
-    console.log(bytes)
-
-    return new Uint8Array;
-}
-
-// state that the programm go through at run time
+// Runtime class that encapsulates all characteristics of a snap shot
+// This class is immutable
 export class Runtime {
-    memory: WebAssembly.Memory;
-    view: DataView;
-    
-    dataSegmentSizeInBytes: number;
-    dataSegmentByteStr: string;
-    heapBuffer: number // Heap size limit in bytes
-    stackBuffer: number // Stacks size limit in bytes
+    readonly control: (StatementP | ExpressionP)[];
+    readonly stash: (Address | ConstantP)[];
+    readonly memory: Memory;
 
-    sharedWasmGlobalVariables: SharedWasmGlobalVariables;
+    constructor(control: (StatementP | ExpressionP)[], memory: Memory, stash? : (Address | ConstantP)[]) {
+        this.control = control;
+        this.stash = stash ?? [];
+        this.memory = memory;
+    }
 
-    // Constructor to initiate the first runtime object
-    constructor(
-        dataSegmentByteStr: string, // The string of bytes (each byte is in the form "\\XX" where X is a digit in base-16) to initialize the data segment with, determined by processing initializers for data segment variables.
-        dataSegmentSizeInBytes: number,
-        heapBuffer?: number,
-        stackBuffer?: number
-    ) {
-        this.dataSegmentSizeInBytes = dataSegmentSizeInBytes;
-        this.dataSegmentByteStr = dataSegmentByteStr
-        this.heapBuffer = heapBuffer ?? 32 * KB;
-        this.stackBuffer = stackBuffer ?? 32 * KB;
+    pushConstantToStack(val: Address | ConstantP) : Runtime {
+        const newMemory = this.memory.clone(); 
+        const newRuntime = new Runtime([...this.control], newMemory, [...this.stash, val]);
 
-        const totalMemory = this.dataSegmentSizeInBytes + this.heapBuffer + this.stackBuffer;
-        const initialPages = calculateNumberOfPagesNeededForBytes(totalMemory);
+        return newRuntime;
+    }
 
-        this.memory = new WebAssembly.Memory({ initial: initialPages });
-        this.view = new DataView(this.memory.buffer);
+    // Pops the top most instruction
+    popInstruction() : {
+        newRuntime: Runtime,
+        topInstruction: StatementP | ExpressionP 
+    } {
+        const newMemory = this.memory.clone();
+        if(this.control.length === 0) {
+            return {
+                newRuntime: new Runtime([], newMemory, [...this.stash]), 
+                topInstruction: null as unknown as StatementP | ExpressionP
+            };
+        }
 
-        this.sharedWasmGlobalVariables = {
-            stackPointer: new WebAssembly.Global(
-                { value: WASM_ADDR_TYPE, mutable: true },
-                WASM_PAGE_IN_HEX * initialPages,
-            ),
-            basePointer: new WebAssembly.Global(
-                { value: WASM_ADDR_TYPE, mutable: true },
-                0,
-            ),
-            heapPointer: new WebAssembly.Global(
-                { value: WASM_ADDR_TYPE, mutable: true },
-                dataSegmentSizeInBytes + 4,
-            )
+        const topInstruction = this.control[this.control.length - 1];
+        const newControl = this.control.slice(0, -1);
+
+        return {
+            newRuntime: new Runtime(newControl, newMemory, [...this.stash]),
+            topInstruction: topInstruction
         };
+    }
 
-        // Initiate the data segment
-        console.log("TODO: Initiate the data segment")
-        parseDataSegmentByteStr(dataSegmentByteStr);
-        
+    empty() : boolean {
+        return this.control.length === 0;
     }
 }

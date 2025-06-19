@@ -1,4 +1,3 @@
-import { ScalarDataType } from "~dist";
 import { BinaryOperator, ScalarCDataType } from "~src/common/types";
 import { DataType } from "~src/parser/c-ast/dataTypes";
 import {
