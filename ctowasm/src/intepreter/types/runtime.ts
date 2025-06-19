@@ -17,9 +17,38 @@ export class Runtime {
         this.memory = memory;
     }
 
+    pushStatementsToControlStack(statements: StatementP[]) : Runtime {
+        const newControl = [...this.control];
+        
+        // Control is a stack so we need to loop backwards to push elements in
+        for(let i = statements.length - 1;i >= 0;i--) {
+            newControl.push(statements[i]);
+        }
+
+        const newRuntime = new Runtime(newControl, this.memory, this.stash);
+        return newRuntime;
+    }
+
+    pushExpressionsToControlStack(expressions: ExpressionP[]) : Runtime {
+        const newControl = [...this.control];
+
+        // Control is a stack so we need to loop backwards to push elements in
+        for(let i = expressions.length - 1;i >= 0;i--) {
+            newControl.push(expressions[i]);
+        }
+
+        const newRuntime = new Runtime(newControl, this.memory, this.stash);
+        return newRuntime;
+    }
+ 
+    pushInstrunctionsToControlStack(statements: (StatementP | ExpressionP)[]) : Runtime {
+        const newRuntime = new Runtime(this.control.concat(statements), this.memory, this.stash);
+
+        return newRuntime;
+    }
+
     pushConstantToStack(val: Address | ConstantP) : Runtime {
-        const newMemory = this.memory.clone(); 
-        const newRuntime = new Runtime([...this.control], newMemory, [...this.stash, val]);
+        const newRuntime = new Runtime([...this.control], this.memory, [...this.stash, val]);
 
         return newRuntime;
     }
@@ -29,10 +58,9 @@ export class Runtime {
         newRuntime: Runtime,
         topInstruction: StatementP | ExpressionP 
     } {
-        const newMemory = this.memory.clone();
         if(this.control.length === 0) {
             return {
-                newRuntime: new Runtime([], newMemory, [...this.stash]), 
+                newRuntime: new Runtime([], this.memory, this.stash), 
                 topInstruction: null as unknown as StatementP | ExpressionP
             };
         }
@@ -41,7 +69,7 @@ export class Runtime {
         const newControl = this.control.slice(0, -1);
 
         return {
-            newRuntime: new Runtime(newControl, newMemory, [...this.stash]),
+            newRuntime: new Runtime(newControl, this.memory, this.stash),
             topInstruction: topInstruction
         };
     }

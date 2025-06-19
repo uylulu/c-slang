@@ -4,10 +4,9 @@ import { Runtime } from "./types/runtime";
 export default function interpreteStatement(
     statement: StatementP,
     currentRuntime: Runtime,
-) : Runtime[] {
+) : Runtime {
     const temp : Runtime[] = []
 
 
-
-    return temp;
+    return currentRuntime;
 }
